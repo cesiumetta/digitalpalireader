@@ -15,6 +15,7 @@ function ddump(a) { }
 const navigationFeatureName = "navigation";
 const searchFeatureName = "search";
 const dictionaryFeatureName = "dictionary";
+const paliFeatureName = "pali"
 
 const __dprViewModel = new DprViewModel();
 ko.applyBindings(__dprViewModel);
@@ -33,7 +34,10 @@ async function mainInitialize() {
     await loadFeatureAsync(searchFeatureName, initializeSearchFeature);
   } else if (DPR_PAL.isDictionaryFeature()) {
     await loadFeatureAsync(dictionaryFeatureName, initializeDictionaryFeature);
-  } else {
+  } else if (DPR_PAL.isPaliFeature()) {
+    await loadFeatureAsync(paliFeatureName, initializePaliFeature);
+  }
+    else {
     await loadHtmlFragmentAsync("#main-content-landing-page", 'features/landing-page/main-pane.html');
     __dprViewModel.showLandingFeature();
     initFeedbackFormParameters();
@@ -104,7 +108,8 @@ const loadPanesAsync = async () => {
   const allTabs = [
     ['navigation', initializeNavigationSidebarTab],
     ['search', initializeSearchSidebarTab],
-    ['dictionary', initializeDictionarySidebarTab]
+    ['dictionary', initializeDictionarySidebarTab],
+    ['pali', initializePaliSidebarTab]
   ];
 
   const all = [
@@ -121,6 +126,8 @@ const initFeatureTabs = () => {
   $("#navigationTabPane").hide();
   $("#searchTabPane").hide();
   $("#dictionaryTabPane").hide();
+  $("#paliTabPane").hide();
+
 
   const activeTab = __dprViewModel.activeTab();
   $(`#${activeTab}TabPane`).show();
