@@ -1,22 +1,11 @@
 'use strict';
 
 function openFirstDPRTab() {
-  if (!DPR_PAL.isXUL) {
-    return;
-  }
-
-  if(!findDPRTab('DPR-main')) openDPRMain('DPR-main','chrome://digitalpalireader/content/index.xul','');
+  if(!findDPRTab('DPR-main')) openDPRMain('DPR-main',DPR_PAL.toWebUrl('chrome://digitalpalireader/content/index.xul'),'');
 }
 
 function openDPRTab(permalink, id, reuse) {
-  if (DPR_PAL.isWeb) {
-    if (reuse) {
-      window.location.href = permalink;
-    } else {
-      window.open(permalink, '_blank');
-    }
-    return false;
-  }
+  permalink = DPR_PAL.toWebUrl(permalink);
 
   if(reuse) { // reuse old tab
     var oldTab = findDPRTab(id);
@@ -39,7 +28,7 @@ function openDPRTab(permalink, id, reuse) {
       // Get the next tab
       var currentTab = tabbrowser.tabContainer.childNodes[index];
       var ctloc = DPR_PAL.mainWindow.gBrowser.getBrowserForTab(currentTab).contentDocument.location.href;
-      if (!/^DPR/.exec(currentTab.getAttribute('id')) || !/chrome:\/\/digitalpalireader\/content\//.exec(ctloc)) { // not a dpr tab
+      if (!/^DPR/.exec(currentTab.getAttribute('id')) || !DPR_PAL.dprUrlMatcher.exec(ctloc)) { // not a dpr tab
         if (start == 1) { // prev was a DPR tab
           newIdx = index;
           break;
@@ -60,10 +49,6 @@ function openDPRTab(permalink, id, reuse) {
 
 
 function findDPRTab(id,loc) {
-  if (!DPR_PAL.isXUL) {
-    return false;
-  }
-
   for (var found = false, index = 0, tabbrowser = DPR_PAL.mainWindow.gBrowser; index < tabbrowser.tabContainer.childNodes.length && !found; index++) {
 
     // Get the next tab
@@ -71,7 +56,7 @@ function findDPRTab(id,loc) {
     var ctloc = DPR_PAL.mainWindow.gBrowser.getBrowserForTab(currentTab).contentDocument.location.href;
 
     // Does this tab contain our custom attribute?
-    if (currentTab.getAttribute('id') == id && /chrome:\/\/digitalpalireader\/content\//.exec(ctloc)) {
+    if (currentTab.getAttribute('id') == id && DPR_PAL.dprUrlMatcher.exec(ctloc)) {
 
       return currentTab;
     }
@@ -80,10 +65,6 @@ function findDPRTab(id,loc) {
 }
 
 function findDPRTabs(id,loc) {
-  if (!DPR_PAL.isXUL) {
-    return [];
-  }
-
   var tabs = [];
   for (var found = false, index = 0, tabbrowser = DPR_PAL.mainWindow.gBrowser; index < tabbrowser.tabContainer.childNodes.length && !found; index++) {
 
@@ -92,7 +73,7 @@ function findDPRTabs(id,loc) {
     var ctloc = DPR_PAL.mainWindow.gBrowser.getBrowserForTab(currentTab).contentDocument.location.href;
 
     // Does this tab contain our custom attribute?
-    if (currentTab.getAttribute('id') == id && /chrome:\/\/digitalpalireader\/content\//.exec(ctloc)) {
+    if (currentTab.getAttribute('id') == id && DPR_PAL.dprUrlMatcher.exec(ctloc)) {
 
       tabs.push(currentTab);
     }
@@ -101,10 +82,6 @@ function findDPRTabs(id,loc) {
 }
 
 function findDPRTabByLoc(loc) {
-  if (!DPR_PAL.isXUL) {
-    return false;
-  }
-
   loc = new RegExp(loc);
   for (var found = false, index = 0, tabbrowser = DPR_PAL.mainWindow.gBrowser; index < tabbrowser.tabContainer.childNodes.length && !found; index++) {
 
@@ -113,7 +90,7 @@ function findDPRTabByLoc(loc) {
     var ctloc = DPR_PAL.mainWindow.gBrowser.getBrowserForTab(currentTab).contentDocument.location.href;
 
     // Does this tab contain our custom attribute?
-    if (/chrome:\/\/digitalpalireader\/content\//.exec(ctloc) && loc.exec(ctloc)) {
+    if (DPR_PAL.dprUrlMatcher.exec(ctloc) && loc.exec(ctloc)) {
 
       return currentTab;
     }
@@ -132,17 +109,13 @@ function updatePrefs() {
     // Get the next tab
     var currentTab = tabbrowser.tabContainer.childNodes[index];
     var ctloc = DPR_PAL.mainWindow.gBrowser.getBrowserForTab(currentTab).contentDocument.location.href;
-    if (/^DPR/.exec(currentTab.getAttribute('id')) && /chrome:\/\/digitalpalireader\/content\//.exec(ctloc)) { // a dpr tab
+    if (/^DPR/.exec(currentTab.getAttribute('id')) && DPR_PAL.dprUrlMatcher.exec(ctloc)) { // a dpr tab
       currentTab.linkedBrowser.contentWindow.getconfig();
     }
   }
 }
 
 function isDPRTab(id) {
-  if (!DPR_PAL.isXUL) {
-    return false;
-  }
-
   if(DPR_PAL.mainWindow.gBrowser.selectedTab.id == id) return DPR_PAL.mainWindow.gBrowser.selectedTab;
   else return false;
 }
@@ -161,7 +134,7 @@ function giveIDtoTabs() { // startup function, give ids to
     // Get the next tab
     var currentTab = tb.tabContainer.childNodes[index];
     var ctloc = tb.getBrowserForTab(currentTab).contentDocument.location.href;
-    if (/chrome:\/\/digitalpalireader\/content\//.exec(ctloc)) { // a dpr tab
+    if (DPR_PAL.dprUrlMatcher.exec(ctloc)) { // a dpr tab
       tb.setIcon(currentTab, "chrome://digitalpalireader/skin/icons/logo.png");
       if(/index\.xul/.exec(ctloc)) currentTab.setAttribute('id',(main++==0?'DPR-main':'DPRm'));
       else if(/dict\.htm/.exec(ctloc)) currentTab.setAttribute('id',(dict++==0?'DPR-dict':'DPRd'));
@@ -182,7 +155,7 @@ function checkLastTab() {
     // Get the next tab
     var currentTab = tabbrowser.tabContainer.childNodes[index];
     var ctloc = DPR_PAL.mainWindow.gBrowser.getBrowserForTab(currentTab).contentWindow.location.href;
-    if (/^DPR/.exec(currentTab.getAttribute('id')) && /chrome:\/\/digitalpalireader\/content\//.exec(ctloc)) { // a dpr tab
+    if (/^DPR/.exec(currentTab.getAttribute('id')) && DPR_PAL.dprUrlMatcher.exec(ctloc)) { // a dpr tab
       return false; // still one open tab
     }
   }
@@ -197,7 +170,7 @@ function DPRSidebarWindow() {
 
   var sidebar = DPR_PAL.mainWindow.document.getElementById("sidebar");
 
-  if (sidebar.contentDocument.location.href == "chrome://digitalpalireader/content/digitalpalireader.xul") {
+  if (sidebar.contentDocument.location.href == DPR_PAL.toWebUrl("chrome://digitalpalireader/content/digitalpalireader.xul")) {
     return sidebar.contentWindow;
   }
   else return false
@@ -210,41 +183,46 @@ function DPRSidebarDocument() {
 
   var sidebar = DPR_PAL.mainWindow.document.getElementById("sidebar").contentDocument;
 
-  if (sidebar.location.href == "chrome://digitalpalireader/content/digitalpalireader.xul") {
+  if (sidebar.location.href == DPR_PAL.toWebUrl("chrome://digitalpalireader/content/digitalpalireader.xul")) {
     return sidebar;
   }
   else return false
 }
 
 function closeDPRSidebar() {
-  if (!DPR_PAL.isXUL) {
-    return;
-  }
+  if (DPR_PAL.isWeb) {
+    __dprViewModel.sidebarVisible(false);
+  } else {
+    var sidebarWindow = DPR_PAL.mainWindow.document.getElementById("sidebar").contentDocument;
 
-  var sidebarWindow = DPR_PAL.mainWindow.document.getElementById("sidebar").contentDocument;
-
-  if (sidebarWindow.location.href == "chrome://digitalpalireader/content/digitalpalireader.xul") {
-    return DPR_PAL.mainWindow.toggleSidebar();
+    if (sidebarWindow.location.href == "chrome://digitalpalireader/content/digitalpalireader.xul") {
+      return DPR_PAL.mainWindow.toggleSidebar();
+    }
   }
 }
-function openDPRSidebar() {
-  if (!DPR_PAL.isXUL) {
-    return;
-  }
 
-  var sidebarWindow = DPR_PAL.mainWindow.document.getElementById("sidebar").contentDocument;
-  if (sidebarWindow.location.href != "chrome://digitalpalireader/content/digitalpalireader.xul") {
-    return DPR_PAL.mainWindow.toggleSidebar('viewDPR');
+function openDPRSidebar() {
+  if (DPR_PAL.isWeb) {
+    __dprViewModel.sidebarVisible(true);
+  } else {
+    var sidebarWindow = DPR_PAL.mainWindow.document.getElementById("sidebar").contentDocument;
+    if (sidebarWindow.location.href != "chrome://digitalpalireader/content/digitalpalireader.xul") {
+      return DPR_PAL.mainWindow.toggleSidebar('viewDPR');
+    }
   }
+}
+
+function toggleDPRSidebar() {
+  __dprViewModel.sidebarVisible(!__dprViewModel.sidebarVisible());
 }
 
 function setCurrentTitle(title) {
-    if (DPR_PAL.isXUL) {
-    DPR_PAL.mainWindow.gBrowser.selectedTab.setAttribute('label',title);
-    } else {
+  if (DPR_PAL.isWeb) {
     document.title = title;
-    }
+  } else {
+    DPR_PAL.mainWindow.gBrowser.selectedTab.setAttribute('label',title);
   }
+}
 
 function closeBrowser(id) {
   if (!DPR_PAL.isXUL) {
@@ -308,24 +286,6 @@ const closeBottomFrame = () => {
 }
 
 var DPR_Chrome = (function () {
-  const toggleNewSidebarVisibility = () => {
-    if ($('#main-sidebar').is(":visible")) {
-      closeNewSidebar();
-    } else {
-      openNewSidebar();
-    }
-  }
-
-  const closeNewSidebar = () => {
-    $("#main-sidebar").hide();
-    $("#main-panel-splitter").hide();
-  }
-
-  const openNewSidebar = () => {
-    $("#main-sidebar").show();
-    $("#main-panel-splitter").show();
-  }
-
   const fixupUrlAndMainPanelSectionsLayout = () => {
     const availableWidth = $('#main-pane-container').width();
     const totalSplitterWidth = $('.main-pane-container-splitter')
@@ -392,11 +352,70 @@ var DPR_Chrome = (function () {
     fixupUrlAndMainPanelSectionsLayout();
   }
 
+  const ToastTypeError = 'Error';
+  const ToastTypeWarning = 'Warning';
+  const ToastTypeSuccess = 'Success';
+  const ToastTypeInfo = 'Information';
+  const createToast = (type, message, delay, text, uniqueId) => {
+    const containerId = "#main-container-toast-container";
+    if ($(containerId).find(`#${uniqueId}`).length) {
+      console.log('Notification with id:', uniqueId, 'already exists. Not creating another.');
+      // NOTE: Singleton notifications.
+      return;
+    }
+
+    let typeClasses = '';
+    let style = ''
+    if (type === ToastTypeError) {
+      typeClasses = 'bg-danger text-light';
+    } else if (type === ToastTypeWarning) {
+      typeClasses = 'bg-warning text-light';
+    } else if (type === ToastTypeSuccess) {
+      typeClasses = 'bg-success text-light';
+    } else if (type === ToastTypeInfo) {
+      style = 'color: #004085; background-color: #cce5ff;';
+    } else {
+      console.error('Unknown type', type);
+    }
+
+    $(containerId).append(`
+      <div id="${uniqueId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-delay="${delay}">
+        <div class="toast-header ${typeClasses}" style="${style}">
+          <strong class="mr-auto">${text || type}</strong>
+          <small></small>
+          <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+            <span aria-hidden="true"><small>&times;</small></span>
+          </button>
+        </div>
+        <div class="toast-body ${typeClasses}" style="${style}">
+          ${message}
+        </div>
+      </div>
+    `);
+
+    $(".toast").toast("show");
+
+    $(".toast").on("hidden.bs.toast", e => $(e.currentTarget).remove());
+  }
+
+  const toastVisibleForMilliseconds = 2000;
+  const showErrorToast = (message) => createToast(ToastTypeError, message, toastVisibleForMilliseconds);
+  const showWarningToast = (message) => createToast(ToastTypeWarning, message, toastVisibleForMilliseconds);
+  const showSuccessToast = (message) => createToast(ToastTypeSuccess, message, toastVisibleForMilliseconds);
+  const showInformationToast = (message) => createToast(ToastTypeInformation, message, toastVisibleForMilliseconds);
+
   return {
-    toggleNewSidebarVisibility: toggleNewSidebarVisibility,
-    openNewSidebar: openNewSidebar,
+    toggleDPRSidebar: toggleDPRSidebar,
+    openDPRSidebar: openDPRSidebar,
+    closeDPRSidebar: openDPRSidebar,
     addMainPanelSection: addMainPanelSection,
     addMainPanelSections: addMainPanelSections,
     closeContainerSection: closeContainerSection,
+    showErrorToast: showErrorToast,
+    showWarningToast: showWarningToast,
+    showSuccessToast: showSuccessToast,
+    showInformationToast: showInformationToast,
+    createToast: createToast,
+    ToastTypeInfo: ToastTypeInfo,
   };
 })();

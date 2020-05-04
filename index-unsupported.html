@@ -4,11 +4,10 @@
     <meta charset="utf-8">
     <title>Digital Pāli Reader (beta)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="refresh" content="15">
 
     <link rel="icon" href="./favicon.png" />
 
-    <title>Digital Pāli Reader (beta) is under maintenance</title>
+    <title>Digital Pāli Reader (beta)</title>
 
     <script>
       const getDeploymentVar = (depVar, defVal) => depVar.startsWith('#{') ? defVal : depVar;
@@ -35,48 +34,30 @@
         height: 100%;
         font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande",
           "Lucida Sans", Arial, sans-serif;
-        font-size: 18px;
-        padding: 0px;
-        margin: 0px;
+        font-size: 16px;
+        padding: 0;
+        margin: 0;
         overflow: auto;
+        background-color: #FFD;
       }
 
-      #main-container-maintenance-page {
+      #main-container-unsupported-page {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
         height: 100%;
-        display: grid;
-        grid-template-columns: 1fr;
-        grid-template-rows: 1fr auto auto 1fr;
-        grid-template-areas:
-          "."
-          "spinner"
-          "message"
-          ".";
-        grid-gap: 0.5rem;
+        font-size: larger;
       }
-
-      .spin-img-infinitely {
-        animation: spin-img-infinitely-kfs 8s infinite linear;
-      }
-
-      @keyframes spin-img-infinitely-kfs {
-        from {
-          transform: translate(-50%, -50%) rotate(0deg);
-        }
-        to {
-          transform: translate(-50%, -50%) rotate(359deg);
-        }
-      }
-
     </style>
   </head>
 
   <body>
-    <div id="main-container-maintenance-page">
-      <img style="grid-area: spinner; justify-self: center;" class="spin-img-infinitely" src="/digitalpalireader/content/images/dwheel.png" alt="Loading...">
-      <div style="grid-area: message; justify-self: center;">
-        <h1>Digital Pāli Reader is under maintenance. Please check back in a few mins...</h1>
+    <div id="main-container-unsupported-page">
+      <div style="margin: 2rem;">
+        Digital Pāli Reader is not supported on the current browser. Please use <a target="_blank" href="https://www.google.com/chrome/">Chrome</a>, <a target="_blank" href="https://www.microsoft.com/en-us/edge">Edge (Chromium)</a>, <a target="_blank" href="https://www.mozilla.org/en-US/exp/firefox/new/">Firefox</a> or <a target="_blank" href="https://support.apple.com/downloads/safari">Safari</a>.
       </div>
     </div>
-
   </body>
 </html>

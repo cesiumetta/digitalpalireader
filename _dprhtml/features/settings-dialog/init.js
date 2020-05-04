@@ -5,6 +5,31 @@ class SettingsDialogTabsViewModel {
     this.isGeneralSettingsTabSelected = ko.observable(true);
     this.isLayoutSettingsTabSelected = ko.observable(false);
     this.isTextSettingsTabSelected = ko.observable(false);
+
+    this.createSettings();
+  }
+
+  createSettings() {
+    return Object
+      .entries(DPR_prefsInfo)
+      .reduce((acc, [k, _]) => (acc[k] = ko.observable(getPref(k)), acc), this);
+  }
+
+  savePreferences() {
+    savePreferences(x => this[x]());
+    window.location.reload(false);
+  }
+
+  defaultPreferences() {
+    Object
+      .entries(DPR_prefsInfo)
+      .forEach(([k, _]) => this[k](DPR_prefsD[k]));
+  }
+
+  cancelPreferences() {
+    Object
+      .entries(DPR_prefsInfo)
+      .forEach(([k, _]) => this[k](DPR_prefs[k]));
   }
 
   updateActiveSettingsTabId(tabId) {

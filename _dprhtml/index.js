@@ -22,9 +22,10 @@ const __bottomPaneTabsViewModel = new BottomPaneTabsViewModel();
 const __settingsDialogViewModel = new SettingsDialogTabsViewModel();
 
 async function mainInitialize() {
-  setPrefs();
+  triggerUpdateCheck();
   initSplitters();
   initFooter();
+  await setupBTForRG();
   await loadPanesAsync();
   ensureHidePopoversWithClickTriggers();
 
@@ -46,12 +47,12 @@ async function mainInitialize() {
 }
 
 function installGlobalHandlers() {
-  window.onresize = () => {
-    setPrefs();
+  window.addEventListener('resize', () => {
+    loadPreference();
     initMainPane();
-  };
+  });
 
-  window.onpopstate = DPRChrome.historyPopstateHandler;
+  window.addEventListener('popstate', e => historyPopstateHandler(e));
 }
 
 const loadFeatureAsync = async (name, initFn) => {
@@ -166,3 +167,55 @@ const loadHtmlFragmentAsync = (id, src, vm = null) =>
       }
     });
   })
+
+const  historyPopstateHandler = e => {
+  console.warn('>>>> historyPopstateHandler', e);
+  if (DPR_PAL.isNavigationFeature()) {
+    $("#navigationDiv").load("navigation.html");
+  } else if (DPR_PAL.isSearchFeature()) {
+    $("#mafbc").load("search-results.html");
+  } else if (DPR_PAL.isDictionaryFeature() && location.indexOf('#') == -1) {
+    $("#mafbc").load("dictionary-results.html");
+  } else {
+    console.error('Unknown feature');
+  }
+}
+
+function triggerUpdateCheck() {
+  const updateCheck = async () => {
+    console.debug('Checking for updates...');
+    try {
+      const verStr = await XML_Load.xhrGetAsync({ url: `${DPR_PAL.baseUrl}version.ver` }, xhr => xhr.responseText.trim());
+      console.debug('Version from server:', verStr, 'current version:', window.releaseNumber);
+      if (verStr !== window.releaseNumber) {
+        const message = `A new version of Digital Pāli Reader just became available. Please <a class="underline" href="" onclick="window.location.reload(true)">refresh this page</a> to activate it.`;
+        DPR_Chrome.createToast(
+          DPR_Chrome.ToastTypeInfo,
+          message,
+          15 * 60 * 1000,
+          'Digital Pāli Reader update',
+          'dpr-update-available-notification');
+      }
+    } catch (e) {
+      console.error('Update check failed with error:', e);
+    }
+  }
+
+  const [firstUpdateCheckIntervalInMins, updateCheckIntervalInHours] =
+    /^(localdev|staging)$/i.test(window.environmentName)
+    ? [5, 1]
+    : [5, 1];
+
+  setTimeout(updateCheck, firstUpdateCheckIntervalInMins * 60 * 1000);
+  setInterval(updateCheck, updateCheckIntervalInHours * 60 * 60 * 1000);
+}
+
+async function setupBTForRG() {
+  try {
+    const btloc = await XML_Load.xhrGetAsync({ url: 'https://tipitaka.digitalpalireader.online/simc-rg.loc' }, xhr => xhr.responseText.trim())
+    DPR_prefs['btloc'] = btloc.replace(/\/+$/g, '');
+    DPR_prefs['buddhist_texts'] = true;
+    DPR_Translations.createTrProps();
+  } catch { }
+  console.log('setupBTForRG:', DPR_prefs['buddhist_texts'], DPR_prefs['btloc']);
+}
